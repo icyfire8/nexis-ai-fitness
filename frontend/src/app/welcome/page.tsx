@@ -149,7 +149,7 @@ export default function HeroPage() {
             <motion.div 
               className="w-1 h-12 bg-blue-500 rounded-full origin-bottom"
               animate={{ scaleY: activeCard === 0 ? 0.5 : 1 }}
-              transition={{ duration: 0.3, yoyo: Infinity }}
+              transition={{ duration: 0.3, repeatType: "reverse", repeat: Infinity }}
             />
           </TiltCard>
 
