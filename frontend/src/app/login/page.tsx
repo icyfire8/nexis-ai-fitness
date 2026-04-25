@@ -59,7 +59,7 @@ export default function Login() {
       
       <div className="glass-card w-[90%] max-w-[400px] p-8 glow-cyan-violet relative z-10 flex flex-col items-center">
         <h1 className="font-display-xl text-4xl mb-2 text-transparent bg-clip-text bg-gradient-to-r from-primary-container to-secondary-container tracking-wider uppercase font-bold text-center">NEXIS</h1>
-        <p className="font-label-caps text-label-caps text-on-surface-variant tracking-[0.2em] mb-10 text-center">BIOMETRIC AUTHENTICATION</p>
+        <p className="font-label-caps text-label-caps text-on-surface-variant tracking-[0.2em] mb-10 text-center">SECURE LOGIN</p>
         
         {authError && (
           <div className="w-full bg-error-container/20 border border-error text-error text-sm p-3 rounded-lg mb-6 text-center">
@@ -71,7 +71,7 @@ export default function Login() {
           {isSignUp && (
             <input 
               type="text" 
-              placeholder="DISPLAY NAME" 
+              placeholder="Full Name" 
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full bg-surface-container-highest/50 border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none rounded-xl px-4 py-3 text-white font-body-md placeholder:text-outline transition-all"
@@ -80,7 +80,7 @@ export default function Login() {
           )}
           <input 
             type="email" 
-            placeholder="EMAIL IDENTIFIER" 
+            placeholder="Email Address" 
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full bg-surface-container-highest/50 border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none rounded-xl px-4 py-3 text-white font-body-md placeholder:text-outline transition-all"
@@ -88,7 +88,7 @@ export default function Login() {
           />
           <input 
             type="password" 
-            placeholder="ACCESS CODES" 
+            placeholder="Password" 
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full bg-surface-container-highest/50 border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none rounded-xl px-4 py-3 text-white font-body-md placeholder:text-outline transition-all"
@@ -99,7 +99,7 @@ export default function Login() {
             disabled={isProcessing}
             className="w-full bg-gradient-primary text-white font-bold tracking-widest uppercase rounded-xl py-3 shadow-[0_0_15px_rgba(0,240,255,0.3)] hover:shadow-[0_0_25px_rgba(0,240,255,0.5)] transition-all disabled:opacity-50"
           >
-            {isProcessing ? "PROCESSING..." : (isSignUp ? "INITIALIZE NEW PROFILE" : "AUTHENTICATE")}
+            {isProcessing ? "PROCESSING..." : (isSignUp ? "Sign Up" : "Log In")}
           </button>
         </form>
 
@@ -107,7 +107,7 @@ export default function Login() {
           onClick={() => setIsSignUp(!isSignUp)}
           className="text-on-surface-variant text-sm hover:text-primary-container transition-colors mb-6"
         >
-          {isSignUp ? "ALREADY HAVE A PROFILE? AUTHENTICATE" : "NO PROFILE DETECTED? INITIALIZE HERE"}
+          {isSignUp ? "Already have an account? Log In" : "Don't have an account? Sign Up"}
         </button>
 
         <div className="w-full space-y-4">
@@ -118,7 +118,7 @@ export default function Login() {
           >
             <div className="absolute inset-0 bg-primary-container/10 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-6 h-6 z-10" />
-            <span className="font-body-lg text-white font-bold tracking-wide z-10">Initialize via Google</span>
+            <span className="font-body-lg text-white font-bold tracking-wide z-10">Sign in with Google</span>
           </button>
         </div>
         

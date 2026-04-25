@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { onAuthStateChanged, User, signInWithPopup, GoogleAuthProvider, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { onAuthStateChanged, User, signInWithPopup, GoogleAuthProvider, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth } from "../lib/firebase";
 import { getUserProfile, saveUserProfile, UserProfile } from "../lib/db";
 
@@ -59,19 +59,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signupWithEmail = async (email: string, pass: string, name: string) => {
     const res = await createUserWithEmailAndPassword(auth, email, pass);
-    // Profile creation will be handled by the onAuthStateChanged listener,
-    // but we can update the display name here or just pass it to the DB directly.
-    let profile = await getUserProfile(res.user.uid);
-    if (!profile) {
-      profile = {
-        uid: res.user.uid,
-        email: res.user.email || email,
-        displayName: name,
-        role: "user",
-        onboardingCompleted: false
-      };
-      await saveUserProfile(res.user.uid, profile);
+    
+    // Update Firebase Auth profile
+    try {
+      await updateProfile(res.user, { displayName: name });
+    } catch (e) {
+      console.error("Failed to update profile name:", e);
     }
+    
+    // Forcefully update the DB profile with the name (overwriting the null one if onAuthStateChanged beat us to it)
+    await saveUserProfile(res.user.uid, { 
+      uid: res.user.uid,
+      email: res.user.email || email,
+      displayName: name,
+      role: "user",
+      onboardingCompleted: false
+    });
   };
 
   const logout = async () => {
