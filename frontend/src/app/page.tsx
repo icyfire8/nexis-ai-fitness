@@ -131,11 +131,55 @@ export default function Dashboard() {
 
   return (
     <ProtectedRoute>
-      <main className="max-w-7xl mx-auto px-6 pt-[100px] pb-[120px]">
+      {/* Moving Blurred Background */}
+      <div className="fixed inset-0 z-[-1] overflow-hidden bg-background pointer-events-none">
+        <motion.div
+          animate={{
+            scale: [1, 1.1, 1],
+            x: [0, -20, 0],
+            y: [0, 10, 0]
+          }}
+          transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+          className="w-full h-full"
+        >
+          <img 
+            src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1470&auto=format&fit=crop" 
+            alt="Gym background" 
+            className="w-full h-full object-cover opacity-15 blur-[12px]"
+          />
+        </motion.div>
+        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background"></div>
+      </div>
+
+      <main className="max-w-7xl mx-auto px-6 pt-[100px] pb-[120px] relative z-10">
         {/* Header Section */}
-        <section className="mb-10">
-          <p className="font-label-caps text-label-caps text-primary mb-2 tracking-[0.15em]">SYSTEM TELEMETRY // ACTIVE</p>
-          <h2 className="font-headline-lg text-headline-lg font-bold tracking-wider text-gradient-subtle uppercase">PERFORMANCE <span className="text-gradient">INSIGHTS</span></h2>
+        <section className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+          <div>
+            <p className="font-label-caps text-label-caps text-primary mb-2 tracking-[0.15em]">SYSTEM TELEMETRY // ACTIVE</p>
+            <h2 className="font-headline-lg text-headline-lg font-bold tracking-wider text-gradient-subtle uppercase">PERFORMANCE <span className="text-gradient">INSIGHTS</span></h2>
+          </div>
+          
+          {/* DAILY STREAK - SMALL PANEL (Moved to top right) */}
+          <div className="glass-panel rounded-2xl px-6 py-4 glow-accent relative overflow-hidden flex items-center gap-6 md:w-auto w-full">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-400 via-red-500 to-pink-500 opacity-80"></div>
+            <div className="relative flex items-center justify-center">
+              <div className="absolute w-12 h-12 bg-orange-500/20 rounded-full blur-md animate-pulse"></div>
+              {streakCount > 0 && <div className="absolute w-10 h-10 border border-orange-500/40 rounded-full animate-ping" style={{animationDuration: '3s'}}></div>}
+              <div className="relative text-3xl z-10" style={{ filter: streakCount > 0 ? 'drop-shadow(0 0 10px rgba(255,100,0,0.8))' : 'none' }}>
+                {streakCount > 0 ? '🔥' : '❄️'}
+              </div>
+            </div>
+            <div className="flex-1 min-w-[100px]">
+              <h3 className="font-label-caps text-[10px] text-orange-300 tracking-[0.2em] mb-0.5">DAILY STREAK</h3>
+              <p className="text-2xl font-black text-white tracking-wider leading-none">{streakCount} <span className="text-on-surface-variant font-light text-sm">Day{streakCount !== 1 ? 's' : ''}</span></p>
+            </div>
+            {/* Mini 7-day streak dots */}
+            <div className="flex gap-2 border-l border-white/10 pl-5">
+              {streakWeek.slice(-5).map((active, i) => (
+                <div key={i} className={`w-3 h-3 rounded-full ${active ? 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.8)]' : 'bg-white/10'}`}></div>
+              ))}
+            </div>
+          </div>
         </section>
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
           {/* Bio-Recovery Index */}
@@ -251,46 +295,8 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* ====== DAILY STREAK ====== */}
-        <div className="md:col-span-5 glass-panel rounded-3xl p-8 glow-accent relative overflow-hidden group">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-400 via-red-500 to-pink-500 opacity-80"></div>
-          
-          <div className="flex items-center gap-6 mb-8">
-            <div className="relative flex items-center justify-center">
-              <div className="absolute w-20 h-20 bg-orange-500/20 rounded-full blur-xl animate-pulse"></div>
-              {streakCount > 0 && <div className="absolute w-16 h-16 border border-orange-500/40 rounded-full animate-ping" style={{animationDuration: '3s'}}></div>}
-              <div className="relative text-5xl z-10" style={{ filter: streakCount > 0 ? 'drop-shadow(0 0 15px rgba(255,100,0,0.8))' : 'none' }}>
-                {streakCount > 0 ? '🔥' : '❄️'}
-              </div>
-            </div>
-            <div>
-              <h3 className="font-label-caps text-label-caps text-orange-300 tracking-[0.2em] mb-1 drop-shadow-[0_0_5px_rgba(253,186,116,0.5)]">DAILY STREAK</h3>
-              <p className="font-headline-md text-headline-md text-white font-black tracking-wider">{streakCount} <span className="text-on-surface-variant font-light text-2xl">Day{streakCount !== 1 ? 's' : ''}</span></p>
-            </div>
-          </div>
-
-          {/* 7-day streak dots */}
-          <div className="flex gap-4 justify-center">
-            {streakWeek.map((active, i) => (
-              <div key={i} className="flex flex-col items-center gap-3">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-black transition-all duration-500 ${
-                  active 
-                    ? 'bg-gradient-to-br from-orange-400 to-red-600 text-white shadow-[0_0_20px_rgba(239,68,68,0.6)] scale-110' 
-                    : 'bg-black/40 border border-white/5 text-on-surface-variant/50'
-                }`}>
-                  {active ? '🔥' : '•'}
-                </div>
-                <span className={`text-[10px] font-label-caps tracking-widest ${active ? 'text-orange-200 font-bold' : 'text-on-surface-variant/50'}`}>{dayLabels[i]}</span>
-              </div>
-            ))}
-          </div>
-          <p className="text-center text-white/80 text-sm mt-8 font-medium tracking-wide bg-white/5 py-2 px-4 rounded-full border border-white/10 inline-block w-full">
-            {streakCount > 3 ? "You're unstoppable! Keep the fire burning. 🚀" : streakCount > 0 ? "Momentum building. Show up again tomorrow." : "Start your streak today — greatness awaits!"}
-          </p>
-        </div>
-
         {/* ====== VIRTUAL GYM BUDDY ====== */}
-        <div className="md:col-span-7 glass-panel rounded-3xl p-8 glow-cyan-violet relative overflow-hidden flex flex-col">
+        <div className="md:col-span-12 glass-panel rounded-3xl p-8 glow-cyan-violet relative overflow-hidden flex flex-col">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-violet-500 to-cyan-400 opacity-30"></div>
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-cyan-400 flex items-center justify-center shadow-[0_0_15px_rgba(139,92,246,0.5)]">
@@ -304,7 +310,7 @@ export default function Dashboard() {
 
           {!showChat ? (
             <div className="flex-1 flex flex-col items-center justify-center py-6">
-              <p className="text-on-surface-variant text-center text-sm mb-6 max-w-sm">
+              <p className="text-on-surface-variant text-center text-base mb-8 max-w-3xl leading-relaxed">
                 {"What's on your mind today, Operative? Talk to NEXIS — your AI gym buddy that motivates, tracks your mood, and keeps you accountable. 💪"}
               </p>
               
