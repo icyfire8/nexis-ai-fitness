@@ -26,19 +26,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       if (user) {
-        // Fetch or create profile
-        let profile = await getUserProfile(user.uid);
-        if (!profile) {
-          profile = {
+        try {
+          // Fetch or create profile
+          let profile = await getUserProfile(user.uid);
+          if (!profile) {
+            profile = {
+              uid: user.uid,
+              email: user.email || "",
+              displayName: user.displayName,
+              role: "user", // Default role
+              onboardingCompleted: false
+            };
+            await saveUserProfile(user.uid, profile);
+          }
+          setUserProfile(profile);
+        } catch (dbError) {
+          console.error("Firestore Error in Auth Listener:", dbError);
+          // Provide a fallback so the app doesn't freeze
+          setUserProfile({
             uid: user.uid,
             email: user.email || "",
-            displayName: user.displayName,
-            role: "user", // Default role
+            displayName: user.displayName || "User",
+            role: "user",
             onboardingCompleted: false
-          };
-          await saveUserProfile(user.uid, profile);
+          });
         }
-        setUserProfile(profile);
       } else {
         setUserProfile(null);
       }
@@ -67,14 +79,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error("Failed to update profile name:", e);
     }
     
-    // Forcefully update the DB profile with the name (overwriting the null one if onAuthStateChanged beat us to it)
-    await saveUserProfile(res.user.uid, { 
-      uid: res.user.uid,
-      email: res.user.email || email,
-      displayName: name,
-      role: "user",
-      onboardingCompleted: false
-    });
+    // Forcefully update the DB profile with the name
+    try {
+      await saveUserProfile(res.user.uid, { 
+        uid: res.user.uid,
+        email: res.user.email || email,
+        displayName: name,
+        role: "user",
+        onboardingCompleted: false
+      });
+    } catch (e) {
+      console.error("Failed to save profile to Firestore:", e);
+    }
   };
 
   const logout = async () => {

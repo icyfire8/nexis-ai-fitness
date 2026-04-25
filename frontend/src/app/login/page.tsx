@@ -14,6 +14,7 @@ export default function Login() {
   const [name, setName] = useState("");
   const [authError, setAuthError] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (currentUser) {
@@ -86,14 +87,26 @@ export default function Login() {
             className="w-full bg-surface-container-highest/50 border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none rounded-xl px-4 py-3 text-white font-body-md placeholder:text-outline transition-all"
             required
           />
-          <input 
-            type="password" 
-            placeholder="Password" 
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full bg-surface-container-highest/50 border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none rounded-xl px-4 py-3 text-white font-body-md placeholder:text-outline transition-all"
-            required
-          />
+          <div className="relative w-full">
+            <input 
+              type={showPassword ? "text" : "password"}
+              placeholder="Password" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full bg-surface-container-highest/50 border border-outline-variant focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none rounded-xl px-4 py-3 pr-12 text-white font-body-md placeholder:text-outline transition-all"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-primary-container transition-colors flex items-center justify-center"
+              tabIndex={-1}
+            >
+              <span className="material-symbols-outlined text-[20px]">
+                {showPassword ? "visibility_off" : "visibility"}
+              </span>
+            </button>
+          </div>
           <button 
             type="submit"
             disabled={isProcessing}
