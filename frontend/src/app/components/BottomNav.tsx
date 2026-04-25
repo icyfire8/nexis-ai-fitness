@@ -5,6 +5,11 @@ import { usePathname } from "next/navigation";
 export default function BottomNav() {
   const pathname = usePathname();
 
+  // Hide BottomNav on pre-login pages
+  if (pathname === "/welcome" || pathname === "/onboarding" || pathname === "/login") {
+    return null;
+  }
+
   const navItems = [
     { name: "Hub", href: "/", icon: "grid_view" },
     { name: "Train", href: "/train", icon: "fitness_center" },
