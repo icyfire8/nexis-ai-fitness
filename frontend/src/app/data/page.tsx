@@ -1,6 +1,15 @@
 import ProtectedRoute from "../components/ProtectedRoute";
+import { useAuth } from "../../context/AuthContext";
 
 export default function TelemetryData() {
+  const { userProfile } = useAuth();
+  
+  let bmi = 0;
+  if (userProfile?.latestMetrics?.weight && userProfile?.latestMetrics?.height) {
+    const w = userProfile.latestMetrics.weight;
+    const h = userProfile.latestMetrics.height / 100;
+    bmi = Number((w / (h * h)).toFixed(1));
+  }
   return (
     <ProtectedRoute>
       <main className="pt-[100px] pb-[120px] px-6 max-w-7xl mx-auto flex flex-col gap-8">
@@ -115,15 +124,15 @@ export default function TelemetryData() {
 
         <div className="md:col-span-4 glass-panel rounded-xl p-6 flex flex-col gap-3">
           <div className="flex items-center gap-3 text-primary-container">
-            <span className="material-symbols-outlined">bolt</span>
-            <span className="font-label-caps text-label-caps uppercase">Power Load</span>
+            <span className="material-symbols-outlined">accessibility_new</span>
+            <span className="font-label-caps text-label-caps uppercase">Body Mass Index</span>
           </div>
           <div className="flex items-baseline gap-1">
-            <span className="font-headline-lg text-headline-lg text-on-surface">310</span>
-            <span className="font-body-md text-body-md text-on-surface-variant">Watts</span>
+            <span className="font-headline-lg text-headline-lg text-on-surface">{bmi || "--"}</span>
+            <span className="font-body-md text-body-md text-on-surface-variant">kg/m²</span>
           </div>
           <div className="w-full h-1 bg-surface-container-high rounded-full overflow-hidden mt-auto">
-            <div className="h-full bg-primary-container w-[60%]"></div>
+            <div className="h-full bg-primary-container" style={{ width: bmi ? `${Math.min((bmi / 40) * 100, 100)}%` : '0%' }}></div>
           </div>
         </div>
 

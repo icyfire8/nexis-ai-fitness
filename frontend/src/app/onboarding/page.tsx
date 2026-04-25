@@ -18,6 +18,7 @@ export default function Onboarding() {
     age: "",
     weight: "",
     height: "",
+    gender: "",
     goal: "",
   });
   const [isSyncing, setIsSyncing] = useState(false);
@@ -28,7 +29,7 @@ export default function Onboarding() {
 
   const isStepValid = () => {
     if (step === 1) return formData.alias.trim() !== "";
-    if (step === 2) return formData.weight !== "" && formData.height !== "" && formData.age !== "";
+    if (step === 2) return formData.weight !== "" && formData.height !== "" && formData.age !== "" && formData.gender !== "";
     if (step === 3) return formData.goal !== "";
     return true;
   };
@@ -102,6 +103,7 @@ export default function Onboarding() {
           weight: Number(formData.weight) || 0,
           height: Number(formData.height) || 0,
           age: Number(formData.age) || 0,
+          gender: formData.gender || "prefer not to say",
           goal: formData.goal || "none",
           activityLevel: "moderate"
         });
@@ -233,15 +235,35 @@ export default function Onboarding() {
                     />
                   </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-2">Age</label>
-                  <input
-                    type="number"
-                    placeholder="e.g. 24"
-                    value={formData.age}
-                    onChange={(e) => updateForm("age", e.target.value)}
-                    className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-2">Age</label>
+                    <input
+                      type="number"
+                      placeholder="e.g. 24"
+                      value={formData.age}
+                      onChange={(e) => updateForm("age", e.target.value)}
+                      className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-2">Gender</label>
+                    <div className="relative">
+                      <select 
+                        value={formData.gender}
+                        onChange={(e) => updateForm("gender", e.target.value)}
+                        className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors appearance-none"
+                      >
+                        <option value="" disabled className="text-neutral-500">Select Gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="prefer not to say">Prefer not to say</option>
+                      </select>
+                      <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                        <ChevronRight className="w-4 h-4 text-neutral-400 rotate-90" />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             )}
