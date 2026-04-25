@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { onAuthStateChanged, User, signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
+import { onAuthStateChanged, User, signInWithPopup, GoogleAuthProvider, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../lib/firebase";
 import { getUserProfile, saveUserProfile, UserProfile } from "../lib/db";
 
@@ -10,6 +10,8 @@ interface AuthContextType {
   userProfile: UserProfile | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
+  loginWithEmail: (e: string, p: string) => Promise<void>;
+  signupWithEmail: (e: string, p: string, n: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -51,12 +53,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await signInWithPopup(auth, provider);
   };
 
+  const loginWithEmail = async (email: string, pass: string) => {
+    await signInWithEmailAndPassword(auth, email, pass);
+  };
+
+  const signupWithEmail = async (email: string, pass: string, name: string) => {
+    const res = await createUserWithEmailAndPassword(auth, email, pass);
+    // Profile creation will be handled by the onAuthStateChanged listener,
+    // but we can update the display name here or just pass it to the DB directly.
+    let profile = await getUserProfile(res.user.uid);
+    if (!profile) {
+      profile = {
+        uid: res.user.uid,
+        email: res.user.email || email,
+        displayName: name,
+        role: "user",
+        onboardingCompleted: false
+      };
+      await saveUserProfile(res.user.uid, profile);
+    }
+  };
+
   const logout = async () => {
     await signOut(auth);
   };
 
   return (
-    <AuthContext.Provider value={{ currentUser, userProfile, loading, signInWithGoogle, logout }}>
+    <AuthContext.Provider value={{ currentUser, userProfile, loading, signInWithGoogle, loginWithEmail, signupWithEmail, logout }}>
       {children}
     </AuthContext.Provider>
   );
