@@ -21,7 +21,15 @@ export default function Onboarding() {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
+  const isStepValid = () => {
+    if (step === 1) return formData.alias.trim() !== "";
+    if (step === 2) return formData.weight !== "" && formData.height !== "" && formData.age !== "";
+    if (step === 3) return formData.goal !== "";
+    return true;
+  };
+
   const handleNext = () => {
+    if (!isStepValid()) return;
     if (step < 3) setStep(step + 1);
     else finishCalibration();
   };
@@ -215,7 +223,12 @@ export default function Onboarding() {
             <div className="mt-8 flex justify-end">
               <button
                 onClick={handleNext}
-                className="flex items-center space-x-2 bg-white text-black px-6 py-3 rounded-lg font-semibold hover:bg-neutral-200 transition-colors"
+                disabled={!isStepValid()}
+                className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-semibold transition-colors ${
+                  isStepValid() 
+                    ? "bg-white text-black hover:bg-neutral-200" 
+                    : "bg-white/20 text-white/40 cursor-not-allowed"
+                }`}
               >
                 <span>{step === 3 ? "Finalize" : "Proceed"}</span>
                 {step < 3 && <ChevronRight size={18} />}
