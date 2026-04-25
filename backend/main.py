@@ -24,7 +24,13 @@ app.add_middleware(
 
 # Configure Firebase Admin
 try:
-    cred = credentials.Certificate("firebase-adminsdk.json")
+    import json
+    service_account_env = os.getenv("FIREBASE_SERVICE_ACCOUNT")
+    if service_account_env:
+        cred_dict = json.loads(service_account_env)
+        cred = credentials.Certificate(cred_dict)
+    else:
+        cred = credentials.Certificate("firebase-adminsdk.json")
     firebase_admin.initialize_app(cred)
     firebase_configured = True
 except Exception as e:
