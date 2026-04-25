@@ -17,7 +17,8 @@ export default function Fuel() {
     setLoading(true);
     try {
       const token = await currentUser.getIdToken();
-      const response = await fetch("http://localhost:8000/api/plan", {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const response = await fetch(`${API_URL}/api/plan`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
