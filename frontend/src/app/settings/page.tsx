@@ -26,7 +26,9 @@ export default function Settings() {
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-secondary to-transparent opacity-30"></div>
           <div className="flex items-center gap-6">
             <div className="w-24 h-24 rounded-full border-2 border-primary-container p-1 relative shrink-0">
-              <img className="w-full h-full rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmKqBcnBwjgZsk-24ym5zK0xfpVoptFACFGjwHRME-OvX8Zgi3TOXQEceoXNDW6fj1uYIPGGuAwBO0JGN4FzYj0z00hVRIP6nj8yLqM1PdRxUfBI75G5zvHmP2bCkzD7XlgB7n4uaYQc3Pvq2CVmwl8qICAGKp1FFELVC6zFTjTTmREQ5FAdg9KJvnX8fUlRpkJIO6PlOQgWGxZGmegX-wzBfi_RSZ4x8yTYAkhUDf0YXFrkU99FYbASU0CLqcnY2IB5Dny6-ohivS" alt="Profile" />
+              <div className="w-full h-full rounded-full bg-surface-container-high flex items-center justify-center text-primary-fixed-dim">
+                <span className="material-symbols-outlined text-[48px]">account_circle</span>
+              </div>
               <div className="absolute bottom-0 right-0 w-6 h-6 bg-surface border border-primary-container rounded-full flex items-center justify-center">
                 <span className="material-symbols-outlined text-[14px] text-primary-container">edit</span>
               </div>
