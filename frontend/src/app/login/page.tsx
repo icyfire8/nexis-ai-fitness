@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function Login() {
-  const { currentUser, signInWithGoogle, loginWithEmail, signupWithEmail, loading } = useAuth();
+  const { currentUser, signInWithGoogle, loginWithEmail, signupWithEmail, resetPassword, loading } = useAuth();
   const router = useRouter();
   
   const [isSignUp, setIsSignUp] = useState(false);
@@ -13,6 +13,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [authError, setAuthError] = useState("");
+  const [authSuccess, setAuthSuccess] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -25,6 +26,7 @@ export default function Login() {
   const handleGoogleLogin = async () => {
     try {
       setAuthError("");
+      setAuthSuccess("");
       await signInWithGoogle();
     } catch (error: any) {
       console.error("Google Login failed:", error);
@@ -32,9 +34,29 @@ export default function Login() {
     }
   };
 
+  const handleResetPassword = async () => {
+    if (!email) {
+      setAuthError("Please enter your email address first to reset your password.");
+      return;
+    }
+    try {
+      setAuthError("");
+      setAuthSuccess("");
+      setIsProcessing(true);
+      await resetPassword(email);
+      setAuthSuccess("Password reset link sent! Please check your inbox.");
+    } catch (error: any) {
+      console.error("Password reset failed:", error);
+      setAuthError(error?.message || "Failed to send password reset email.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError("");
+    setAuthSuccess("");
     setIsProcessing(true);
     try {
       if (isSignUp) {
@@ -63,8 +85,14 @@ export default function Login() {
         <p className="font-label-caps text-label-caps text-on-surface-variant tracking-[0.2em] mb-10 text-center">SECURE LOGIN</p>
         
         {authError && (
-          <div className="w-full bg-error-container/20 border border-error text-error text-sm p-3 rounded-lg mb-6 text-center">
+          <div className="w-full bg-error-container/20 border border-error text-error text-sm p-3 rounded-lg mb-4 text-center">
             {authError}
+          </div>
+        )}
+        
+        {authSuccess && (
+          <div className="w-full bg-primary-container/20 border border-primary-container text-primary-container text-sm p-3 rounded-lg mb-4 text-center">
+            {authSuccess}
           </div>
         )}
 
@@ -107,6 +135,19 @@ export default function Login() {
               </span>
             </button>
           </div>
+          
+          {!isSignUp && (
+            <div className="flex justify-end w-full">
+              <button 
+                type="button"
+                onClick={handleResetPassword}
+                className="text-primary-container text-xs hover:text-white transition-colors"
+              >
+                Forgot Password?
+              </button>
+            </div>
+          )}
+
           <button 
             type="submit"
             disabled={isProcessing}
