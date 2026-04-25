@@ -1,218 +1,235 @@
 "use client";
 
-import { useState } from "react";
-import { motion, useAnimation, useMotionValue, useTransform } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { Activity, Crosshair, MessageSquare } from "lucide-react";
+import { User, Target, MessageSquare, Hexagon } from "lucide-react";
 
-// --- 1. GLITCH TEXT COMPONENT ---
-const GlitchText = () => {
-  const words = ["IGNITE", "ADAPT", "EVOLVE"];
-  const chars = "!<>-_\\\\/[]{}—=+*^?#________";
-  const [displayText, setDisplayText] = useState(words[0]);
-  const [wordIndex, setWordIndex] = useState(0);
+// --- 1. THE MOVING NEURAL MESH BACKGROUND (CANVAS) ---
+// This creates the constantly shifting constellation/network effect seen in your image.
+const NetworkBackground = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const handleHover = () => {
-    let iterations = 0;
-    const nextWord = words[(wordIndex + 1) % words.length];
-    
-    const interval = setInterval(() => {
-      setDisplayText((prev) => 
-        prev.split("").map((letter, index) => {
-          if (index < iterations) return nextWord[index] || "";
-          return chars[Math.floor(Math.random() * chars.length)];
-        }).join("")
-      );
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-      if (iterations >= nextWord.length) {
-        clearInterval(interval);
-        setWordIndex((prev) => (prev + 1) % words.length);
+    let particles: any[] = [];
+    let animationFrameId: number;
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener("resize", resize);
+    resize();
+
+    // Initialize particles
+    for (let i = 0; i < 70; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5,
+        radius: Math.random() * 2,
+      });
+    }
+
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+      ctx.lineWidth = 1;
+
+      for (let i = 0; i < particles.length; i++) {
+        let p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+
+        // Bounce off walls
+        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Connect nearby particles
+        for (let j = i + 1; j < particles.length; j++) {
+          let p2 = particles[j];
+          let dist = Math.sqrt(Math.pow(p.x - p2.x, 2) + Math.pow(p.y - p2.y, 2));
+          
+          if (dist < 150) {
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p2.x, p2.y);
+            // Opacity fades as they get further apart
+            ctx.strokeStyle = `rgba(255, 255, 255, ${0.15 - dist / 1000})`;
+            ctx.stroke();
+          }
+        }
       }
-      iterations += 1 / 3;
-    }, 30);
-  };
+      animationFrameId = requestAnimationFrame(draw);
+    };
+
+    draw();
+
+    return () => {
+      window.removeEventListener("resize", resize);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
+
+  return <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none" />;
+};
+
+// --- 2. THE "BIKE" TEXT CAROUSEL ---
+const FastCarouselText = () => {
+  const words = ["IGNITE", "ADAPT", "BUILD", "EVOLVE"];
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    // Changes word every 2.5 seconds
+    const timer = setInterval(() => {
+      setIndex((prev) => (prev + 1) % words.length);
+    }, 2500);
+    return () => clearInterval(timer);
+  }, []);
 
   return (
-    <h1 className="text-5xl md:text-7xl font-bold tracking-tighter text-white mb-6">
-      NEXIS is calibrated to <br />
-      <span 
-        onMouseEnter={handleHover}
-        className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 cursor-crosshair transition-all duration-300"
-      >
-        [ {displayText} ]
-      </span>
-    </h1>
+    <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex items-center gap-3 text-2xl md:text-4xl font-bold tracking-widest text-white uppercase pointer-events-none whitespace-nowrap">
+      <span className="text-neutral-400">NEXIS IS </span>
+      <span>CALIBRATED TO...</span>
+      
+      {/* The Fast In/Out Animation */}
+      <div className="relative w-48 h-12 flex items-center overflow-hidden">
+        <AnimatePresence mode="wait">
+          <motion.span
+            key={index}
+            // Starts far left, skewed
+            initial={{ x: -100, opacity: 0, skewX: -20 }}
+            // Snaps to center, un-skews
+            animate={{ x: 0, opacity: 1, skewX: 0 }}
+            // Zooms out to the right, skews again
+            exit={{ x: 100, opacity: 0, skewX: 20 }}
+            transition={{ 
+              duration: 0.4, 
+              ease: "circOut" // Gives that snappy, aggressive feel
+            }}
+            className="absolute text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 font-black text-3xl md:text-5xl"
+          >
+            {words[index]}
+          </motion.span>
+        </AnimatePresence>
+      </div>
+    </div>
   );
 };
 
-// --- 2. 3D PARALLAX CARD COMPONENT ---
-interface TiltCardProps {
-  title: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-  isHovered: boolean;
-  setHovered: (val: boolean) => void;
-}
-
-const TiltCard = ({ title, icon: Icon, children, isHovered, setHovered }: TiltCardProps) => {
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  
-  // Convert mouse position to rotation degrees
-  const rotateX = useTransform(y, [-100, 100], [10, -10]);
-  const rotateY = useTransform(x, [-100, 100], [-10, 10]);
-
-  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    x.set(event.clientX - rect.left - rect.width / 2);
-    y.set(event.clientY - rect.top - rect.height / 2);
-  };
-
-  const handleMouseLeave = () => {
-    x.set(0);
-    y.set(0);
-    setHovered(false);
-  };
-
+// --- 3. THE SKEWED GLASSMORPHIC CARD ---
+const SkewedCard = ({ icon: Icon, label, delay = 0, yOffset = 0 }: { icon: any, label: string, delay?: number, yOffset?: number }) => {
   return (
     <motion.div
-      style={{ rotateX, rotateY, perspective: 1000 }}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={handleMouseLeave}
-      className="relative w-64 h-64 bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer shadow-2xl transition-colors hover:border-white/30 hover:bg-white/10"
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: yOffset }}
+      transition={{ duration: 0.8, delay, ease: "easeOut" }}
+      // Applies the heavy tilt seen in the screenshot
+      className="relative w-48 h-64 md:w-64 md:h-80 bg-white/5 border-2 border-white/10 backdrop-blur-md rounded-3xl flex flex-col items-center justify-center transform -skew-x-[15deg] rotate-[5deg] hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer group shadow-[0_0_50px_rgba(0,0,0,0.5)]"
     >
-      <div className="text-blue-400 mb-4">{Icon}</div>
-      <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
-      <div className="w-full mt-4 h-16 flex items-center justify-center">
-        {children}
+      {/* Un-skew the contents inside so the icon sits straight */}
+      <div className="transform skew-x-[15deg] -rotate-[5deg] flex flex-col items-center gap-6">
+        <Icon size={64} className="text-white group-hover:scale-110 transition-transform duration-300" strokeWidth={1.5} />
+        
+        {/* The overlapping pill label */}
+        <div className="absolute -bottom-4 md:-bottom-6 border-2 border-white bg-black/50 backdrop-blur-md text-white text-xs md:text-sm font-bold tracking-widest px-6 py-2 rounded-full uppercase transform skew-x-[15deg] -rotate-[5deg] group-hover:border-blue-400 transition-colors">
+          {label}
+        </div>
       </div>
     </motion.div>
   );
 };
 
-// --- MAIN PAGE ---
+// --- MAIN HERO PAGE ---
 export default function HeroPage() {
   const router = useRouter();
   const [isHolding, setIsHolding] = useState(false);
-  const [activeCard, setActiveCard] = useState<number | null>(null);
   const fillControls = useAnimation();
 
-  // --- 3. HOLD TO INITIALIZE LOGIC ---
+  // Hold to Initialize Logic
   const startHold = async () => {
     setIsHolding(true);
-    // Animate the button filling up over 1.5 seconds
     await fillControls.start({
       width: "100%",
-      transition: { duration: 1.5, ease: "linear" }
+      transition: { duration: 1.5, ease: "linear" },
     });
-    // Once full, route to onboarding
     router.push("/onboarding");
   };
 
   const stopHold = () => {
     setIsHolding(false);
-    // Quickly drain the button if they let go early
     fillControls.start({
       width: "0%",
-      transition: { duration: 0.3 }
+      transition: { duration: 0.3 },
     });
   };
 
   return (
-    <div className="min-h-screen bg-neutral-950 flex flex-col items-center justify-center relative overflow-hidden">
+    <div className="min-h-screen bg-[#0A0E17] flex flex-col items-center justify-center relative overflow-hidden font-sans">
       
-      {/* Background Neural Orbs (Simplified Mesh Alternative) */}
-      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[150px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[150px] pointer-events-none" />
-
-      {/* Main Content */}
-      <div className="z-10 text-center flex flex-col items-center max-w-6xl mx-auto px-4 w-full">
-        
-        {/* Dynamic Typography */}
-        <GlitchText />
-        
-        <p className="text-neutral-400 max-w-2xl text-lg mb-16">
-          A unified AI ecosystem tracking your movements, optimizing your nutrition, and evolving your physical capabilities in real-time.
-        </p>
-
-        {/* 3D Glassmorphic Cards */}
-        <div className="flex flex-col md:flex-row gap-8 mb-20 w-full justify-center">
-          
-          <TiltCard 
-            title="Pose Tracking" 
-            icon={<Activity size={32} />}
-            isHovered={activeCard === 0}
-            setHovered={(val) => setActiveCard(val ? 0 : null)}
-          >
-            {/* Live Simulation: Stick figure line expands on hover */}
-            <motion.div 
-              className="w-1 h-12 bg-blue-500 rounded-full origin-bottom"
-              animate={{ scaleY: activeCard === 0 ? 0.5 : 1 }}
-              transition={{ duration: 0.3, repeatType: "reverse", repeat: Infinity }}
-            />
-          </TiltCard>
-
-          <TiltCard 
-            title="Macro Optimization" 
-            icon={<Crosshair size={32} />}
-            isHovered={activeCard === 1}
-            setHovered={(val) => setActiveCard(val ? 1 : null)}
-          >
-            {/* Live Simulation: Progress bar fills on hover */}
-            <div className="w-full h-2 bg-neutral-800 rounded-full overflow-hidden">
-              <motion.div 
-                className="h-full bg-purple-500"
-                initial={{ width: "20%" }}
-                animate={{ width: activeCard === 1 ? "100%" : "20%" }}
-                transition={{ duration: 1, ease: "easeOut" }}
-              />
-            </div>
-          </TiltCard>
-
-          <TiltCard 
-            title="AI Buddy" 
-            icon={<MessageSquare size={32} />}
-            isHovered={activeCard === 2}
-            setHovered={(val) => setActiveCard(val ? 2 : null)}
-          >
-            {/* Live Simulation: Chat bubble appears on hover */}
-            <motion.div 
-              className="bg-white/10 px-4 py-2 rounded-xl text-xs text-neutral-300 border border-white/5"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: activeCard === 2 ? 1 : 0, y: activeCard === 2 ? 0 : 10 }}
-            >
-              "2 more reps. Let's go."
-            </motion.div>
-          </TiltCard>
-
+      {/* App Logo */}
+      <div className="absolute top-6 left-6 z-40 flex items-center gap-3 select-none">
+        <div className="relative flex items-center justify-center w-10 h-10">
+          <Hexagon className="text-cyan-400 absolute w-full h-full" strokeWidth={1.5} />
+          <div className="w-2 h-2 bg-purple-500 rounded-full shadow-[0_0_10px_#A855F7]"></div>
         </div>
+        <span className="text-white font-black tracking-[0.2em] text-xl drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">NEXIS</span>
+      </div>
 
-        {/* Biometric Hold CTA */}
-        <div className="relative group cursor-pointer"
-             onPointerDown={startHold}
-             onPointerUp={stopHold}
-             onPointerLeave={stopHold}>
+      {/* 1. Moving Background */}
+      <NetworkBackground />
+
+      {/* 2. Fast Text Carousel Overlay */}
+      <FastCarouselText />
+
+      {/* 3. The Skewed Cards Layout */}
+      <div className="z-10 flex flex-row items-center justify-center gap-4 md:gap-12 mt-20 w-full px-4">
+        <SkewedCard icon={User} label="Pose Tracking" delay={0.1} yOffset={20} />
+        <SkewedCard icon={Target} label="Macros" delay={0.2} yOffset={-20} />
+        <SkewedCard icon={MessageSquare} label="AI Chat" delay={0.3} yOffset={20} />
+      </div>
+
+      {/* 4. Bottom CTA Button */}
+      <div className="absolute bottom-12 z-20 w-full flex justify-center">
+        <div 
+          className="relative group cursor-pointer"
+          onPointerDown={startHold}
+          onPointerUp={stopHold}
+          onPointerLeave={stopHold}
+          // Support for mobile touch screens
+          onTouchStart={startHold}
+          onTouchEnd={stopHold}
+        >
+          {/* Subtle glow behind button */}
+          <div className="absolute -inset-1 bg-white/10 rounded-full blur-md group-hover:bg-blue-500/20 transition-all duration-300"></div>
           
-          {/* Outer glow ring that snaps to mouse slightly via CSS */}
-          <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg blur opacity-25 group-hover:opacity-75 transition duration-200"></div>
-          
-          <button className="relative w-64 h-16 bg-black border border-white/20 rounded-lg overflow-hidden flex items-center justify-center text-white font-semibold uppercase tracking-widest transition-transform active:scale-95 select-none touch-none">
+          <button className="relative w-72 h-14 bg-transparent border-2 border-white/30 rounded-full overflow-hidden flex items-center justify-center text-white font-bold uppercase tracking-widest text-sm transition-all group-hover:border-white">
             
-            {/* The fill bar */}
-            <motion.div 
+            {/* The fill animation bar */}
+            <motion.div
               animate={fillControls}
               initial={{ width: "0%" }}
-              className="absolute left-0 top-0 bottom-0 bg-white/20 backdrop-blur-sm"
+              className="absolute left-0 top-0 bottom-0 bg-white/20 backdrop-blur-md"
             />
             
-            <span className="relative z-10 flex items-center gap-3">
+            <span className="relative z-10 opacity-70 group-hover:opacity-100 transition-opacity">
               {isHolding ? "Initializing..." : "Hold to Initialize"}
             </span>
           </button>
         </div>
-
       </div>
+
     </div>
   );
 }
