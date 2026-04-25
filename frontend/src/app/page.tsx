@@ -269,6 +269,7 @@ export default function Dashboard() {
                   {/* Tooltip */}
                   {hoveredPoint === i && (
                     <g>
+                      <line x1={pt.x} y1={0} x2={pt.x} y2={200} stroke="rgba(0,240,255,0.3)" strokeWidth={1} strokeDasharray="4 4" />
                       <rect x={pt.x - 60} y={pt.y - 65} width={120} height={50} rx={8} fill="rgba(10,14,23,0.95)" stroke="rgba(0,240,255,0.6)" strokeWidth={1.5} filter="url(#glow)" />
                       <text x={pt.x} y={pt.y - 42} textAnchor="middle" fill="#ffffff" fontSize={12} fontWeight="900" letterSpacing="0.05em">{chartData[i].day} — {chartData[i].power}</text>
                       <text x={pt.x} y={pt.y - 25} textAnchor="middle" fill="#00f0ff" fontSize={10} fontWeight="bold">Vel: {chartData[i].velocity}</text>

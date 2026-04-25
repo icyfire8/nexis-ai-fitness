@@ -107,7 +107,7 @@ export default function Train() {
   };
 
   const mapUrl = location 
-    ? `https://maps.google.com/maps?q=${location.lat},${location.lng}&t=m&z=13&output=embed`
+    ? `https://maps.google.com/maps?q=gyms+fitness+centers+near+${location.lat},${location.lng}&t=m&z=13&output=embed`
     : `https://maps.google.com/maps?q=gyms+fitness+centers+near+me&t=m&z=13&output=embed`;
 
   return (

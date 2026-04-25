@@ -166,9 +166,11 @@ async def generate_fuel_plan(stats: UserStats):
       }},
       "meals": [
         {{ "name": "Breakfast", "food": "Oatmeal with Berries", "macros": "P: 10g | C: 40g | F: 5g", "search_term": "Oats" }},
+        {{ "name": "Mid-Morning Snack", "food": "Protein Shake & Almonds", "macros": "P: 25g | C: 5g | F: 10g", "search_term": "Almonds" }},
         {{ "name": "Lunch", "food": "Grilled Chicken Salad", "macros": "P: 40g | C: 15g | F: 12g", "search_term": "Chicken Breast" }},
+        {{ "name": "Pre-Workout", "food": "Banana & Peanut Butter", "macros": "P: 8g | C: 30g | F: 16g", "search_term": "Peanut Butter" }},
         {{ "name": "Dinner", "food": "Salmon and Quinoa", "macros": "P: 35g | C: 30g | F: 20g", "search_term": "Salmon" }},
-        {{ "name": "Snack", "food": "Greek Yogurt", "macros": "P: 15g | C: 10g | F: 0g", "search_term": "Greek Yogurt" }}
+        {{ "name": "Evening Snack", "food": "Greek Yogurt", "macros": "P: 15g | C: 10g | F: 0g", "search_term": "Greek Yogurt" }}
       ],
       "message": "A short, motivating 1-sentence message."
     }}
