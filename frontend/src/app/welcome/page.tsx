@@ -42,7 +42,7 @@ export default function Welcome() {
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-[120px] pointer-events-none" />
 
-      <div className="w-full max-w-md relative z-10">
+      <div className="w-[90%] max-w-[440px] relative z-10">
         {/* Header */}
         <div className="text-center mb-10">
           <h1 className="text-3xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
