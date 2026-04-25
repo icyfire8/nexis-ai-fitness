@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "../context/AuthContext";
+import { motion } from "framer-motion";
 
 // --- INTERACTIVE CHART DATA ---
 const chartData = [
@@ -188,7 +189,12 @@ export default function Dashboard() {
                   <feComposite in="SourceGraphic" in2="blur" operator="over"></feComposite>
                 </filter>
               </defs>
-              <path d="M0,150 Q100,160 200,80 T400,100 T600,40 T800,90" fill="none" filter="url(#glow)" stroke="url(#chartGradient)" strokeLinecap="round" strokeWidth="4"></path>
+              <motion.path 
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: 1 }}
+                transition={{ duration: 1.5, ease: "easeInOut" }}
+                d="M0,150 Q100,160 200,80 T400,100 T600,40 T800,90" fill="none" filter="url(#glow)" stroke="url(#chartGradient)" strokeLinecap="round" strokeWidth="4"
+              />
               <path d="M0,150 Q100,160 200,80 T400,100 T600,40 T800,90 V200 H0 Z" fill="url(#chartGradient)" fillOpacity="0.05"></path>
               
               {/* Interactive data points */}
@@ -198,7 +204,7 @@ export default function Dashboard() {
                   <circle
                     cx={pt.x}
                     cy={pt.y}
-                    r={20}
+                    r={30}
                     fill="transparent"
                     className="cursor-pointer"
                     onMouseEnter={() => setHoveredPoint(i)}
@@ -208,18 +214,20 @@ export default function Dashboard() {
                   <circle
                     cx={pt.x}
                     cy={pt.y}
-                    r={hoveredPoint === i ? 8 : 4}
+                    r={hoveredPoint === i ? 10 : 4}
                     fill={hoveredPoint === i ? "#00f0ff" : "white"}
                     filter={hoveredPoint === i ? "url(#dotGlow)" : undefined}
+                    stroke={hoveredPoint === i ? "white" : "none"}
+                    strokeWidth={hoveredPoint === i ? 2 : 0}
                     className="transition-all duration-200"
                     style={{ pointerEvents: "none" }}
                   />
                   {/* Tooltip */}
                   {hoveredPoint === i && (
                     <g>
-                      <rect x={pt.x - 60} y={pt.y - 58} width={120} height={44} rx={8} fill="rgba(0,0,0,0.9)" stroke="rgba(0,240,255,0.4)" strokeWidth={1} />
-                      <text x={pt.x} y={pt.y - 38} textAnchor="middle" fill="#00f0ff" fontSize={11} fontWeight="bold">{chartData[i].day} — {chartData[i].power}</text>
-                      <text x={pt.x} y={pt.y - 22} textAnchor="middle" fill="#aaa" fontSize={10}>Vel: {chartData[i].velocity}</text>
+                      <rect x={pt.x - 60} y={pt.y - 65} width={120} height={50} rx={8} fill="rgba(10,14,23,0.95)" stroke="rgba(0,240,255,0.6)" strokeWidth={1.5} filter="url(#glow)" />
+                      <text x={pt.x} y={pt.y - 42} textAnchor="middle" fill="#ffffff" fontSize={12} fontWeight="900" letterSpacing="0.05em">{chartData[i].day} — {chartData[i].power}</text>
+                      <text x={pt.x} y={pt.y - 25} textAnchor="middle" fill="#00f0ff" fontSize={10} fontWeight="bold">Vel: {chartData[i].velocity}</text>
                     </g>
                   )}
                 </g>
@@ -244,34 +252,40 @@ export default function Dashboard() {
         </div>
 
         {/* ====== DAILY STREAK ====== */}
-        <div className="md:col-span-5 glass-panel rounded-3xl p-8 glow-accent relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-red-600 opacity-50"></div>
-          <div className="flex items-center gap-4 mb-6">
-            <div className="text-4xl" style={{ filter: streakCount > 0 ? 'drop-shadow(0 0 12px rgba(255,140,0,0.8))' : 'none' }}>
-              {streakCount > 0 ? '🔥' : '❄️'}
+        <div className="md:col-span-5 glass-panel rounded-3xl p-8 glow-accent relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-400 via-red-500 to-pink-500 opacity-80"></div>
+          
+          <div className="flex items-center gap-6 mb-8">
+            <div className="relative flex items-center justify-center">
+              <div className="absolute w-20 h-20 bg-orange-500/20 rounded-full blur-xl animate-pulse"></div>
+              {streakCount > 0 && <div className="absolute w-16 h-16 border border-orange-500/40 rounded-full animate-ping" style={{animationDuration: '3s'}}></div>}
+              <div className="relative text-5xl z-10" style={{ filter: streakCount > 0 ? 'drop-shadow(0 0 15px rgba(255,100,0,0.8))' : 'none' }}>
+                {streakCount > 0 ? '🔥' : '❄️'}
+              </div>
             </div>
             <div>
-              <h3 className="font-label-caps text-label-caps text-on-surface-variant tracking-[0.1em]">DAILY STREAK</h3>
-              <p className="font-headline-md text-headline-md text-white font-bold">{streakCount} Day{streakCount !== 1 ? 's' : ''}</p>
+              <h3 className="font-label-caps text-label-caps text-orange-300 tracking-[0.2em] mb-1 drop-shadow-[0_0_5px_rgba(253,186,116,0.5)]">DAILY STREAK</h3>
+              <p className="font-headline-md text-headline-md text-white font-black tracking-wider">{streakCount} <span className="text-on-surface-variant font-light text-2xl">Day{streakCount !== 1 ? 's' : ''}</span></p>
             </div>
           </div>
+
           {/* 7-day streak dots */}
-          <div className="flex gap-3 justify-center">
+          <div className="flex gap-4 justify-center">
             {streakWeek.map((active, i) => (
-              <div key={i} className="flex flex-col items-center gap-2">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+              <div key={i} className="flex flex-col items-center gap-3">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-black transition-all duration-500 ${
                   active 
-                    ? 'bg-gradient-to-br from-orange-400 to-red-500 text-white shadow-[0_0_15px_rgba(255,140,0,0.5)]' 
-                    : 'bg-white/5 border border-white/10 text-on-surface-variant'
+                    ? 'bg-gradient-to-br from-orange-400 to-red-600 text-white shadow-[0_0_20px_rgba(239,68,68,0.6)] scale-110' 
+                    : 'bg-black/40 border border-white/5 text-on-surface-variant/50'
                 }`}>
                   {active ? '🔥' : '•'}
                 </div>
-                <span className="text-[9px] font-label-caps text-on-surface-variant">{dayLabels[i]}</span>
+                <span className={`text-[10px] font-label-caps tracking-widest ${active ? 'text-orange-200 font-bold' : 'text-on-surface-variant/50'}`}>{dayLabels[i]}</span>
               </div>
             ))}
           </div>
-          <p className="text-center text-on-surface-variant text-xs mt-6 font-light">
-            {streakCount > 3 ? "You're on fire, Operative! Don't break the chain. 🔥" : streakCount > 0 ? "Keep showing up. Consistency beats intensity." : "Start your streak today — open the app daily!"}
+          <p className="text-center text-white/80 text-sm mt-8 font-medium tracking-wide bg-white/5 py-2 px-4 rounded-full border border-white/10 inline-block w-full">
+            {streakCount > 3 ? "You're unstoppable! Keep the fire burning. 🚀" : streakCount > 0 ? "Momentum building. Show up again tomorrow." : "Start your streak today — greatness awaits!"}
           </p>
         </div>
 
@@ -293,11 +307,20 @@ export default function Dashboard() {
               <p className="text-on-surface-variant text-center text-sm mb-6 max-w-sm">
                 {"What's on your mind today, Operative? Talk to NEXIS — your AI gym buddy that motivates, tracks your mood, and keeps you accountable. 💪"}
               </p>
+              
+              <div className="flex flex-wrap justify-center gap-2 mb-8 w-full">
+                 {["Need motivation! 🔥", "Give me a workout tip 🏋️", "I feel tired today 😴"].map(prompt => (
+                   <button key={prompt} onClick={() => { setShowChat(true); setChatInput(prompt); }} className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-xs text-cyan-100 font-medium hover:bg-cyan-500/20 hover:border-cyan-500/50 hover:text-white transition-all shadow-sm">
+                      {prompt}
+                   </button>
+                 ))}
+              </div>
+
               <button 
                 onClick={() => setShowChat(true)}
-                className="px-6 py-3 rounded-xl bg-gradient-to-r from-violet-500 to-cyan-500 text-white font-bold text-sm tracking-wider hover:scale-105 active:scale-95 transition-transform shadow-[0_0_20px_rgba(139,92,246,0.3)]"
+                className="px-8 py-3 rounded-xl bg-gradient-to-r from-violet-500 to-cyan-500 text-white font-bold text-sm tracking-wider hover:scale-105 active:scale-95 transition-transform shadow-[0_0_20px_rgba(139,92,246,0.3)]"
               >
-                START CONVERSATION
+                OPEN CHAT INTERFACE
               </button>
             </div>
           ) : (
@@ -305,8 +328,15 @@ export default function Dashboard() {
               {/* Chat Messages */}
               <div className="flex-1 overflow-y-auto max-h-[250px] space-y-3 mb-4 pr-2 scrollbar-thin scrollbar-thumb-white/10">
                 {chatMessages.length === 0 && (
-                  <div className="text-center text-on-surface-variant/50 text-sm py-8">
-                    Say something to your AI buddy...
+                  <div className="flex flex-col items-center justify-center py-8">
+                    <div className="text-on-surface-variant/50 text-sm mb-4">Say something to your AI buddy...</div>
+                    <div className="flex flex-wrap justify-center gap-2 px-2">
+                      {["Need motivation! 🔥", "Give me a workout tip 🏋️", "I feel tired today 😴"].map(prompt => (
+                         <button key={prompt} onClick={() => { setChatInput(prompt); }} className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-cyan-100 hover:bg-cyan-500/20 hover:border-cyan-500/50 hover:text-white transition-all">
+                            {prompt}
+                         </button>
+                      ))}
+                    </div>
                   </div>
                 )}
                 {chatMessages.map((msg, i) => (
