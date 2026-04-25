@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+
+# Next.js
+.next/
+out/
+build/
+
+# Python / FastApi
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+
+# Environment Variables / Sensitive Data
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+firebase-adminsdk.json
+
+# Misc
+.DS_Store
+*.pem
+.vercel
