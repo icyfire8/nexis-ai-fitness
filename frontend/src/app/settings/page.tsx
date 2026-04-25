@@ -1,6 +1,19 @@
+"use client";
+
 import ProtectedRoute from "../components/ProtectedRoute";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Settings() {
+  const { userProfile, logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Failed to log out", error);
+    }
+  };
+
   return (
     <ProtectedRoute>
       <main className="max-w-7xl mx-auto px-6 pt-[100px] pb-[120px]">
@@ -19,9 +32,18 @@ export default function Settings() {
               </div>
             </div>
             <div>
-              <h3 className="font-headline-md text-white font-bold tracking-wider uppercase">ALEX MERCER</h3>
-              <p className="font-label-caps text-primary-container tracking-[0.1em]">ID: NX-77492</p>
-              <div className="mt-2 inline-block px-3 py-1 bg-primary-container/20 border border-primary-fixed-dim text-primary-fixed-dim font-label-caps text-[10px] rounded-full uppercase">Elite Tier</div>
+              <h3 className="font-headline-md text-white font-bold tracking-wider uppercase">{userProfile?.displayName || "USER PROFILE"}</h3>
+              <p className="font-label-caps text-primary-container tracking-[0.1em]">{userProfile?.email}</p>
+              <div className="flex gap-3 mt-3">
+                <div className="inline-block px-3 py-1 bg-primary-container/20 border border-primary-fixed-dim text-primary-fixed-dim font-label-caps text-[10px] rounded-full uppercase">Standard Tier</div>
+                <button 
+                  onClick={handleLogout}
+                  className="inline-flex items-center gap-1 px-3 py-1 bg-error/10 border border-error/50 text-error font-label-caps text-[10px] rounded-full uppercase hover:bg-error hover:text-on-error transition-colors cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[12px]">logout</span>
+                  Log Out
+                </button>
+              </div>
             </div>
           </div>
         </div>
