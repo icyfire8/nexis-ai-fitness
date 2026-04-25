@@ -1,6 +1,133 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { useAuth } from "../context/AuthContext";
+
+// --- INTERACTIVE CHART DATA ---
+const chartData = [
+  { day: "MON", value: 150, power: "980W", velocity: "3.2m/s" },
+  { day: "TUE", value: 160, power: "1,050W", velocity: "3.8m/s" },
+  { day: "WED", value: 80, power: "1,180W", velocity: "4.5m/s" },
+  { day: "THU", value: 100, power: "1,100W", velocity: "4.1m/s" },
+  { day: "FRI", value: 40, power: "1,240W", velocity: "4.8m/s" },
+  { day: "SAT", value: 70, power: "1,150W", velocity: "4.6m/s" },
+  { day: "SUN", value: 90, power: "1,080W", velocity: "4.2m/s" },
+];
+
+// SVG path data points (approximate y-positions for each day along the chart)
+const dataPoints = [
+  { x: 0, y: 150 },
+  { x: 133, y: 160 },
+  { x: 266, y: 80 },
+  { x: 400, y: 100 },
+  { x: 533, y: 40 },
+  { x: 666, y: 70 },
+  { x: 800, y: 90 },
+];
+
+// --- STREAK LOGIC ---
+function getStreak(): number[] {
+  if (typeof window === "undefined") return [];
+  const stored = localStorage.getItem("nexis_streak");
+  const today = new Date().toISOString().slice(0, 10);
+  let streakDays: string[] = stored ? JSON.parse(stored) : [];
+  
+  if (!streakDays.includes(today)) {
+    streakDays.push(today);
+    // Keep only last 30 days
+    streakDays = streakDays.slice(-30);
+    localStorage.setItem("nexis_streak", JSON.stringify(streakDays));
+  }
+  
+  // Calculate consecutive streak from today backwards
+  let count = 0;
+  const now = new Date();
+  for (let i = 0; i < 365; i++) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    if (streakDays.includes(key)) {
+      count++;
+    } else {
+      break;
+    }
+  }
+  
+  // Return array of last 7 days with 1=active, 0=inactive
+  const week: number[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    week.push(streakDays.includes(key) ? 1 : 0);
+  }
+  return week;
+}
+
+function getStreakCount(): number {
+  if (typeof window === "undefined") return 0;
+  const stored = localStorage.getItem("nexis_streak");
+  const streakDays: string[] = stored ? JSON.parse(stored) : [];
+  let count = 0;
+  const now = new Date();
+  for (let i = 0; i < 365; i++) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    if (streakDays.includes(key)) {
+      count++;
+    } else {
+      break;
+    }
+  }
+  return count;
+}
 
 export default function Dashboard() {
+  const router = useRouter();
+  const { userProfile } = useAuth();
+  const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
+  const [streakWeek, setStreakWeek] = useState<number[]>([]);
+  const [streakCount, setStreakCount] = useState(0);
+  
+  // --- CHAT STATE ---
+  const [chatMessages, setChatMessages] = useState<{role: string; text: string}[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+
+  useEffect(() => {
+    setStreakWeek(getStreak());
+    setStreakCount(getStreakCount());
+  }, []);
+
+  const dayLabels = ["M", "T", "W", "T", "F", "S", "S"];
+
+  const sendChat = async () => {
+    if (!chatInput.trim() || chatLoading) return;
+    const userMsg = chatInput.trim();
+    setChatInput("");
+    const newMessages = [...chatMessages, { role: "user", text: userMsg }];
+    setChatMessages(newMessages);
+    setChatLoading(true);
+    
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const res = await fetch(`${API_URL}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userMsg, history: newMessages.slice(-10) }),
+      });
+      const data = await res.json();
+      setChatMessages([...newMessages, { role: "nexis", text: data.reply }]);
+    } catch {
+      setChatMessages([...newMessages, { role: "nexis", text: "Comms disrupted, Operative. Try again shortly. 💪" }]);
+    }
+    setChatLoading(false);
+  };
+
   return (
     <ProtectedRoute>
       <main className="max-w-7xl mx-auto px-6 pt-[100px] pb-[120px]">
@@ -10,6 +137,7 @@ export default function Dashboard() {
           <h2 className="font-headline-lg text-headline-lg font-bold tracking-wider text-gradient-subtle uppercase">PERFORMANCE <span className="text-gradient">INSIGHTS</span></h2>
         </section>
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          {/* Bio-Recovery Index */}
           <div className="md:col-span-4 glass-panel rounded-3xl p-8 glow-cyan-violet flex flex-col items-center justify-center relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-400 to-transparent opacity-30"></div>
           <h3 className="font-label-caps text-label-caps text-on-surface-variant mb-8 tracking-[0.1em]">BIO-RECOVERY INDEX</h3>
@@ -31,7 +159,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* 7-Day Velocity Chart (Col 8) */}
+        {/* 7-Day Velocity Chart — INTERACTIVE */}
         <div className="md:col-span-8 glass-panel rounded-3xl p-8 glow-cyan-violet relative overflow-hidden min-h-[400px]">
           <div className="flex justify-between items-start mb-10">
             <div>
@@ -55,18 +183,52 @@ export default function Dashboard() {
                   <feGaussianBlur result="blur" stdDeviation="3"></feGaussianBlur>
                   <feComposite in="SourceGraphic" in2="blur" operator="over"></feComposite>
                 </filter>
+                <filter id="dotGlow">
+                  <feGaussianBlur stdDeviation="6" result="blur"></feGaussianBlur>
+                  <feComposite in="SourceGraphic" in2="blur" operator="over"></feComposite>
+                </filter>
               </defs>
               <path d="M0,150 Q100,160 200,80 T400,100 T600,40 T800,90" fill="none" filter="url(#glow)" stroke="url(#chartGradient)" strokeLinecap="round" strokeWidth="4"></path>
               <path d="M0,150 Q100,160 200,80 T400,100 T600,40 T800,90 V200 H0 Z" fill="url(#chartGradient)" fillOpacity="0.05"></path>
+              
+              {/* Interactive data points */}
+              {dataPoints.map((pt, i) => (
+                <g key={i}>
+                  {/* Invisible larger hitbox */}
+                  <circle
+                    cx={pt.x}
+                    cy={pt.y}
+                    r={20}
+                    fill="transparent"
+                    className="cursor-pointer"
+                    onMouseEnter={() => setHoveredPoint(i)}
+                    onMouseLeave={() => setHoveredPoint(null)}
+                  />
+                  {/* Visible dot */}
+                  <circle
+                    cx={pt.x}
+                    cy={pt.y}
+                    r={hoveredPoint === i ? 8 : 4}
+                    fill={hoveredPoint === i ? "#00f0ff" : "white"}
+                    filter={hoveredPoint === i ? "url(#dotGlow)" : undefined}
+                    className="transition-all duration-200"
+                    style={{ pointerEvents: "none" }}
+                  />
+                  {/* Tooltip */}
+                  {hoveredPoint === i && (
+                    <g>
+                      <rect x={pt.x - 60} y={pt.y - 58} width={120} height={44} rx={8} fill="rgba(0,0,0,0.9)" stroke="rgba(0,240,255,0.4)" strokeWidth={1} />
+                      <text x={pt.x} y={pt.y - 38} textAnchor="middle" fill="#00f0ff" fontSize={11} fontWeight="bold">{chartData[i].day} — {chartData[i].power}</text>
+                      <text x={pt.x} y={pt.y - 22} textAnchor="middle" fill="#aaa" fontSize={10}>Vel: {chartData[i].velocity}</text>
+                    </g>
+                  )}
+                </g>
+              ))}
             </svg>
             <div className="absolute inset-0 flex justify-between items-end px-2 pointer-events-none">
-              <span className="font-label-caps text-[10px] text-on-surface-variant tracking-[0.1em]">MON</span>
-              <span className="font-label-caps text-[10px] text-on-surface-variant tracking-[0.1em]">TUE</span>
-              <span className="font-label-caps text-[10px] text-on-surface-variant tracking-[0.1em]">WED</span>
-              <span className="font-label-caps text-[10px] text-on-surface-variant tracking-[0.1em]">THU</span>
-              <span className="font-label-caps text-[10px] text-on-surface-variant tracking-[0.1em]">FRI</span>
-              <span className="font-label-caps text-[10px] text-on-surface-variant tracking-[0.1em]">SAT</span>
-              <span className="font-label-caps text-[10px] text-on-surface-variant tracking-[0.1em]">SUN</span>
+              {chartData.map((d, i) => (
+                <span key={i} className={`font-label-caps text-[10px] tracking-[0.1em] transition-colors ${hoveredPoint === i ? 'text-cyan-400' : 'text-on-surface-variant'}`}>{d.day}</span>
+              ))}
             </div>
           </div>
           <div className="mt-8 flex gap-8">
@@ -81,17 +243,129 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Predictive Milestone Card (Col 7) */}
+        {/* ====== DAILY STREAK ====== */}
+        <div className="md:col-span-5 glass-panel rounded-3xl p-8 glow-accent relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-red-600 opacity-50"></div>
+          <div className="flex items-center gap-4 mb-6">
+            <div className="text-4xl" style={{ filter: streakCount > 0 ? 'drop-shadow(0 0 12px rgba(255,140,0,0.8))' : 'none' }}>
+              {streakCount > 0 ? '🔥' : '❄️'}
+            </div>
+            <div>
+              <h3 className="font-label-caps text-label-caps text-on-surface-variant tracking-[0.1em]">DAILY STREAK</h3>
+              <p className="font-headline-md text-headline-md text-white font-bold">{streakCount} Day{streakCount !== 1 ? 's' : ''}</p>
+            </div>
+          </div>
+          {/* 7-day streak dots */}
+          <div className="flex gap-3 justify-center">
+            {streakWeek.map((active, i) => (
+              <div key={i} className="flex flex-col items-center gap-2">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                  active 
+                    ? 'bg-gradient-to-br from-orange-400 to-red-500 text-white shadow-[0_0_15px_rgba(255,140,0,0.5)]' 
+                    : 'bg-white/5 border border-white/10 text-on-surface-variant'
+                }`}>
+                  {active ? '🔥' : '•'}
+                </div>
+                <span className="text-[9px] font-label-caps text-on-surface-variant">{dayLabels[i]}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-center text-on-surface-variant text-xs mt-6 font-light">
+            {streakCount > 3 ? "You're on fire, Operative! Don't break the chain. 🔥" : streakCount > 0 ? "Keep showing up. Consistency beats intensity." : "Start your streak today — open the app daily!"}
+          </p>
+        </div>
+
+        {/* ====== VIRTUAL GYM BUDDY ====== */}
+        <div className="md:col-span-7 glass-panel rounded-3xl p-8 glow-cyan-violet relative overflow-hidden flex flex-col">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-violet-500 to-cyan-400 opacity-30"></div>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-cyan-400 flex items-center justify-center shadow-[0_0_15px_rgba(139,92,246,0.5)]">
+              <span className="material-symbols-outlined text-white text-[20px]">smart_toy</span>
+            </div>
+            <div>
+              <h3 className="font-label-caps text-label-caps text-on-surface-variant tracking-[0.1em]">NEXIS BUDDY</h3>
+              <p className="text-xs text-cyan-400">AI Companion • Online</p>
+            </div>
+          </div>
+
+          {!showChat ? (
+            <div className="flex-1 flex flex-col items-center justify-center py-6">
+              <p className="text-on-surface-variant text-center text-sm mb-6 max-w-sm">
+                {"What's on your mind today, Operative? Talk to NEXIS — your AI gym buddy that motivates, tracks your mood, and keeps you accountable. 💪"}
+              </p>
+              <button 
+                onClick={() => setShowChat(true)}
+                className="px-6 py-3 rounded-xl bg-gradient-to-r from-violet-500 to-cyan-500 text-white font-bold text-sm tracking-wider hover:scale-105 active:scale-95 transition-transform shadow-[0_0_20px_rgba(139,92,246,0.3)]"
+              >
+                START CONVERSATION
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Chat Messages */}
+              <div className="flex-1 overflow-y-auto max-h-[250px] space-y-3 mb-4 pr-2 scrollbar-thin scrollbar-thumb-white/10">
+                {chatMessages.length === 0 && (
+                  <div className="text-center text-on-surface-variant/50 text-sm py-8">
+                    Say something to your AI buddy...
+                  </div>
+                )}
+                {chatMessages.map((msg, i) => (
+                  <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                      msg.role === 'user' 
+                        ? 'bg-cyan-500/20 border border-cyan-500/30 text-white rounded-br-sm' 
+                        : 'bg-violet-500/10 border border-violet-500/20 text-white/90 rounded-bl-sm'
+                    }`}>
+                      {msg.text}
+                    </div>
+                  </div>
+                ))}
+                {chatLoading && (
+                  <div className="flex justify-start">
+                    <div className="bg-violet-500/10 border border-violet-500/20 text-white/50 px-4 py-2.5 rounded-2xl rounded-bl-sm text-sm flex items-center gap-2">
+                      <div className="w-2 h-2 bg-violet-400 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></div>
+                      <div className="w-2 h-2 bg-violet-400 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></div>
+                      <div className="w-2 h-2 bg-violet-400 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              {/* Chat Input */}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && sendChat()}
+                  placeholder="Talk to NEXIS..."
+                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-cyan-500/50 transition-colors"
+                />
+                <button 
+                  onClick={sendChat}
+                  disabled={chatLoading || !chatInput.trim()}
+                  className="w-12 h-12 rounded-xl bg-gradient-to-r from-cyan-500 to-violet-500 flex items-center justify-center text-white hover:scale-105 active:scale-95 transition-transform disabled:opacity-40"
+                >
+                  <span className="material-symbols-outlined text-[20px]">send</span>
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Predictive Milestone + ACTIVATE PROTOCOL */}
         <div className="md:col-span-7 glass-panel rounded-3xl p-1 glow-cyan-violet overflow-hidden group">
           <div className="bg-surface-container-lowest h-full w-full rounded-[22px] p-8 relative flex flex-col md:flex-row gap-8 items-center">
             <div className="flex-1">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-600/20 border border-violet-500/40 mb-4">
                 <span className="material-symbols-outlined text-sm text-secondary" style={{fontVariationSettings: "'FILL' 1"}}>auto_awesome</span>
-                <span className="font-label-caps text-[10px] text-secondary tracking-[0.1em]">PREDICTIVE MILESTONE</span>
+                <span className="font-label-caps text-[10px] text-secondary tracking-[0.1em]">AI GYM TRAINER</span>
               </div>
-              <h3 className="font-headline-md text-headline-md text-white mb-3 font-bold">Titanium Threshold</h3>
-              <p className="font-body-md text-on-surface-variant mb-6 font-light leading-relaxed">Based on your current 7-day velocity trend, you are <strong className="text-white font-bold">94%</strong> likely to hit your 250kg deadlift target by next Friday.</p>
-              <button className="w-full md:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-violet-600 font-bold text-white tracking-widest text-sm shadow-[0_0_20px_rgba(34,211,238,0.4)] transition-transform hover:scale-105 active:scale-95 uppercase">
+              <h3 className="font-headline-md text-headline-md text-white mb-3 font-bold">Activate Protocol</h3>
+              <p className="font-body-md text-on-surface-variant mb-6 font-light leading-relaxed">Launch real-time pose tracking with computer vision. Your AI trainer will analyze your form, count reps, and correct posture — all from your webcam.</p>
+              <button 
+                onClick={() => router.push('/trainer')}
+                className="w-full md:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-violet-600 font-bold text-white tracking-widest text-sm shadow-[0_0_20px_rgba(34,211,238,0.4)] transition-transform hover:scale-105 active:scale-95 uppercase"
+              >
                 ACTIVATE PROTOCOL
               </button>
             </div>
@@ -101,7 +375,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Vital Telemetry (Col 5) */}
+        {/* Vital Telemetry */}
         <div className="md:col-span-5 grid grid-cols-2 gap-4">
           <div className="glass-panel rounded-2xl p-6 flex flex-col justify-between border-l-2 border-l-cyan-400">
             <span className="material-symbols-outlined text-cyan-400 mb-4">ecg</span>

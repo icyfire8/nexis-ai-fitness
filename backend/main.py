@@ -197,6 +197,48 @@ async def generate_fuel_plan(stats: UserStats):
             "error": str(e)
         }
 
+class ChatMessage(BaseModel):
+    message: str
+    history: Optional[List[dict]] = []
+
+@app.post("/api/chat")
+async def chat_with_buddy(msg: ChatMessage):
+    if not model:
+        raise HTTPException(status_code=500, detail="Gemini AI is not configured. Missing API Key.")
+
+    system_prompt = """You are NEXIS, an elite AI virtual gym buddy and motivational fitness companion. 
+    Your personality traits:
+    - You are intensely motivational but never toxic. You push users to be their best.
+    - You use fitness/military-style language mixed with genuine empathy.
+    - You track emotional states — if a user seems down, you adapt your tone to be supportive.
+    - You give actionable fitness, nutrition, and mindset advice.
+    - Keep responses concise (2-4 sentences max) and punchy. No walls of text.
+    - Use occasional emojis like 🔥💪⚡ but don't overdo it.
+    - If someone asks non-fitness questions, gently redirect to wellness topics.
+    - Address users as "Operative" occasionally to keep the NEXIS theme.
+    """
+
+    # Build conversation history for context
+    chat_history = ""
+    for entry in (msg.history or []):
+        role = entry.get("role", "user")
+        text = entry.get("text", "")
+        chat_history += f"\n{role}: {text}"
+    
+    full_prompt = f"""{system_prompt}
+
+Conversation so far:{chat_history}
+user: {msg.message}
+
+Respond as NEXIS:"""
+
+    try:
+        response = model.generate_content(full_prompt)
+        return {"reply": response.text.strip()}
+    except Exception as e:
+        print(f"Chat Error: {e}")
+        return {"reply": "Systems temporarily overloaded, Operative. Let's regroup — what's your training focus today? 💪"}
+
 @app.post("/api/analyze-form")
 def analyze_form():
     return {
