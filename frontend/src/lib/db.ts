@@ -17,6 +17,7 @@ export interface UserMetrics {
   weight: number;
   height: number;
   age: number;
+  gender?: string;
   goal: string;
   activityLevel: string;
   timestamp?: any;

@@ -104,10 +104,19 @@ export default function Fuel() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {aiPlan.meals?.map((meal: any, idx: number) => (
               <div key={idx} className="bg-surface-container-highest/50 p-4 rounded-xl border border-white/5 flex flex-col justify-between">
-                <div>
-                  <span className="text-primary-fixed-dim text-[10px] font-bold uppercase tracking-widest">{meal.name}</span>
-                  <h4 className="font-bold text-white mb-1">{meal.food}</h4>
-                  <p className="text-xs text-on-surface-variant mb-4">{meal.macros}</p>
+                <div className="flex gap-4 mb-4">
+                  <div className="w-20 h-20 shrink-0 rounded-lg overflow-hidden border border-white/10">
+                    <img 
+                      src={`https://loremflickr.com/400/300/${encodeURIComponent(meal.search_term)},food/all`} 
+                      alt={meal.food} 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div>
+                    <span className="text-primary-fixed-dim text-[10px] font-bold uppercase tracking-widest">{meal.name}</span>
+                    <h4 className="font-bold text-white mb-1 leading-tight">{meal.food}</h4>
+                    <p className="text-xs text-on-surface-variant">{meal.macros}</p>
+                  </div>
                 </div>
                 <a 
                   href={`https://blinkit.com/s/?q=${encodeURIComponent(meal.search_term)}`}
