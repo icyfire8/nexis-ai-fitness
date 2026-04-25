@@ -15,6 +15,7 @@ export default function Welcome() {
     height: "",
     goal: "",
   });
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const updateForm = (key: string, value: string) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -23,6 +24,20 @@ export default function Welcome() {
   const handleNext = () => {
     if (step < 3) setStep(step + 1);
     else finishCalibration();
+  };
+
+  const handleHealthSync = () => {
+    setIsSyncing(true);
+    // Simulate API delay connecting to Google Fit / Apple Health
+    setTimeout(() => {
+      setFormData((prev) => ({
+        ...prev,
+        weight: "78",
+        height: "175",
+        age: "28"
+      }));
+      setIsSyncing(false);
+    }, 1500);
   };
 
   const finishCalibration = async () => {
@@ -92,10 +107,25 @@ export default function Welcome() {
                 exit={{ opacity: 0, x: -20 }}
                 className="space-y-6"
               >
-                <div className="flex items-center space-x-3 text-purple-400 mb-6">
-                  <Activity size={24} />
-                  <h2 className="text-xl font-semibold text-white">Biometric Data</h2>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center space-x-3 text-purple-400">
+                    <Activity size={24} />
+                    <h2 className="text-xl font-semibold text-white">Biometric Data</h2>
+                  </div>
+                  <button 
+                    onClick={handleHealthSync}
+                    disabled={isSyncing}
+                    className="flex items-center gap-2 text-xs bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-full transition-colors text-white border border-white/20 disabled:opacity-50"
+                  >
+                    {isSyncing ? (
+                      <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <span className="material-symbols-outlined text-[14px]">sync</span>
+                    )}
+                    {isSyncing ? "Syncing..." : "Google Fit"}
+                  </button>
                 </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-2">Weight (kg)</label>
