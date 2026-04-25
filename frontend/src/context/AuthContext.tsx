@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { onAuthStateChanged, User, signInWithPopup, GoogleAuthProvider, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../lib/firebase";
-import { getUserProfile, saveUserProfile, UserProfile } from "../lib/db";
+import { getUserProfile, saveUserProfile, saveUserMetrics, UserProfile } from "../lib/db";
 
 interface AuthContextType {
   currentUser: User | null;
@@ -28,18 +28,48 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setCurrentUser(user);
       if (user) {
         try {
+          // Check for pre-auth data
+          const preAuthData = localStorage.getItem("nexis_pre_auth_data");
+          let extraData: any = {};
+          if (preAuthData) {
+            try {
+              extraData = JSON.parse(preAuthData);
+            } catch (e) {}
+          }
+
           // Fetch or create profile
           let profile = await getUserProfile(user.uid);
           if (!profile) {
             profile = {
               uid: user.uid,
               email: user.email || "",
-              displayName: user.displayName,
+              displayName: extraData.alias || user.displayName || "User",
               role: "user", // Default role
-              onboardingCompleted: false
+              onboardingCompleted: true
             };
             await saveUserProfile(user.uid, profile);
+          } else if (preAuthData) {
+            // Update existing profile with new alias and set onboarding completed
+            profile.displayName = extraData.alias || profile.displayName;
+            profile.onboardingCompleted = true;
+            await saveUserProfile(user.uid, { displayName: profile.displayName, onboardingCompleted: true });
           }
+          
+          if (preAuthData) {
+            try {
+              if (extraData.weight || extraData.height || extraData.age) {
+                await saveUserMetrics(user.uid, {
+                  weight: Number(extraData.weight) || 0,
+                  height: Number(extraData.height) || 0,
+                  age: Number(extraData.age) || 0,
+                  goal: extraData.goal || "none",
+                  activityLevel: "moderate"
+                });
+              }
+            } catch(e) {}
+            localStorage.removeItem("nexis_pre_auth_data");
+          }
+
           setUserProfile(profile);
         } catch (dbError) {
           console.error("Firestore Error in Auth Listener:", dbError);

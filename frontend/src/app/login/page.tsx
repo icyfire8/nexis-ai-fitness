@@ -20,6 +20,18 @@ export default function Login() {
   useEffect(() => {
     if (currentUser) {
       router.push("/");
+    } else {
+      // Check for pre-auth data to seamlessly transition from welcome screen
+      const preAuth = localStorage.getItem("nexis_pre_auth_data");
+      if (preAuth) {
+        try {
+          const parsed = JSON.parse(preAuth);
+          if (parsed.alias && !name) {
+            setName(parsed.alias);
+            setIsSignUp(true);
+          }
+        } catch (e) {}
+      }
     }
   }, [currentUser, router]);
 

@@ -18,14 +18,10 @@ export default function ProtectedRoute({
   useEffect(() => {
     if (!loading) {
       if (!currentUser) {
-        router.push("/login");
+        router.push("/welcome");
       } else if (userProfile) {
-        // If they haven't finished onboarding, force them there (unless they are already there)
-        if (!userProfile.onboardingCompleted && pathname !== "/onboarding") {
-          router.push("/onboarding");
-        } 
         // RBAC Check
-        else if (adminOnly && userProfile.role !== "admin") {
+        if (adminOnly && userProfile.role !== "admin") {
           router.push("/");
         }
       }
@@ -33,11 +29,7 @@ export default function ProtectedRoute({
   }, [currentUser, userProfile, loading, router, pathname, adminOnly]);
 
   // Show loading spinner while auth resolves or if a redirect is happening
-  if (
-    loading || 
-    !currentUser || 
-    (!userProfile?.onboardingCompleted && pathname !== "/onboarding")
-  ) {
+  if (loading || !currentUser) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="relative">
