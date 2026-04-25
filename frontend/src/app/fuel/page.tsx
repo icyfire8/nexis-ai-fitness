@@ -18,7 +18,7 @@ export default function Fuel() {
     try {
       const token = await currentUser.getIdToken();
       const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      const response = await fetch(`${API_URL}/api/plan`, {
+      const response = await fetch(`${API_URL}/api/fuel-plan`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -101,16 +101,23 @@ export default function Fuel() {
             <h3 className="font-headline-md text-white font-bold">AI Recommended Plan</h3>
           </div>
           <p className="font-body-md text-on-surface-variant mb-6">{aiPlan.message}</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {aiPlan.plan.map((dayPlan: any, idx: number) => (
-              <div key={idx} className="bg-surface-container-highest/50 p-4 rounded-xl border border-white/5">
-                <span className="text-primary-fixed-dim text-[10px] font-bold uppercase tracking-widest">{dayPlan.day}</span>
-                <h4 className="font-bold text-white mb-2">{dayPlan.focus}</h4>
-                <ul className="text-sm text-on-surface-variant flex flex-col gap-1">
-                  {dayPlan.exercises.map((ex: string, i: number) => (
-                    <li key={i}>• {ex}</li>
-                  ))}
-                </ul>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {aiPlan.meals?.map((meal: any, idx: number) => (
+              <div key={idx} className="bg-surface-container-highest/50 p-4 rounded-xl border border-white/5 flex flex-col justify-between">
+                <div>
+                  <span className="text-primary-fixed-dim text-[10px] font-bold uppercase tracking-widest">{meal.name}</span>
+                  <h4 className="font-bold text-white mb-1">{meal.food}</h4>
+                  <p className="text-xs text-on-surface-variant mb-4">{meal.macros}</p>
+                </div>
+                <a 
+                  href={`https://blinkit.com/s/?q=${encodeURIComponent(meal.search_term)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 w-full py-2 bg-[#F8CB46] text-black rounded-lg font-bold text-sm hover:bg-[#F8CB46]/90 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[18px]">shopping_cart</span>
+                  Order on Blinkit
+                </a>
               </div>
             ))}
           </div>

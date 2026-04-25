@@ -142,6 +142,61 @@ async def generate_workout_plan(stats: UserStats):
             "error": str(e)
         }
 
+@app.post("/api/fuel-plan")
+async def generate_fuel_plan(stats: UserStats):
+    if not model:
+        raise HTTPException(status_code=500, detail="Gemini AI is not configured. Missing API Key.")
+    
+    prompt = f"""
+    You are a world-class, elite AI clinical nutritionist.
+    Create a highly optimized, custom 1-day meal plan for a user with these stats:
+    Weight: {stats.weight}kg
+    Height: {stats.height}cm
+    Goal: {stats.goal}
+    Age: {stats.age}
+    Activity Level: {stats.activity_level}
+
+    Return the result EXCLUSIVELY as a JSON object with this exact structure:
+    {{
+      "nutrition": {{
+        "calories": 2500,
+        "protein_g": 150,
+        "carbs_g": 200,
+        "fat_g": 60
+      }},
+      "meals": [
+        {{ "name": "Breakfast", "food": "Oatmeal with Berries", "macros": "P: 10g | C: 40g | F: 5g", "search_term": "Oats" }},
+        {{ "name": "Lunch", "food": "Grilled Chicken Salad", "macros": "P: 40g | C: 15g | F: 12g", "search_term": "Chicken Breast" }},
+        {{ "name": "Dinner", "food": "Salmon and Quinoa", "macros": "P: 35g | C: 30g | F: 20g", "search_term": "Salmon" }},
+        {{ "name": "Snack", "food": "Greek Yogurt", "macros": "P: 15g | C: 10g | F: 0g", "search_term": "Greek Yogurt" }}
+      ],
+      "message": "A short, motivating 1-sentence message."
+    }}
+    Do not include markdown blocks like ```json ... ```, just the raw JSON text.
+    """
+    try:
+        response = model.generate_content(prompt)
+        import json
+        response_text = response.text.strip()
+        if response_text.startswith("```json"):
+            response_text = response_text[7:]
+        if response_text.endswith("```"):
+            response_text = response_text[:-3]
+            
+        data = json.loads(response_text)
+        return data
+    except Exception as e:
+        print(f"Gemini API Error: {e}")
+        return {
+            "nutrition": {"calories": 2000, "protein_g": 120, "carbs_g": 200, "fat_g": 50},
+            "meals": [
+                {"name": "Breakfast", "food": "Eggs & Avocado", "macros": "P: 20g | C: 5g | F: 15g", "search_term": "Eggs"},
+                {"name": "Lunch", "food": "Chicken Rice Bowl", "macros": "P: 40g | C: 45g | F: 10g", "search_term": "Chicken Breast"}
+            ],
+            "message": "Custom fuel plan generated via fallback.",
+            "error": str(e)
+        }
+
 @app.post("/api/analyze-form")
 def analyze_form():
     return {
