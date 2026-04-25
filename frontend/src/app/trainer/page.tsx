@@ -233,24 +233,24 @@ export default function TrainerPage() {
             <div className="relative w-full aspect-[4/3] bg-black flex items-center justify-center">
               <video 
                 ref={videoRef} 
-                className="absolute inset-0 w-full h-full object-cover" 
+                className={`absolute inset-0 w-full h-full object-cover ${!cameraActive ? 'hidden' : ''}`} 
                 playsInline 
                 muted
                 style={{ transform: 'scaleX(-1)' }}
               />
               <canvas 
                 ref={canvasRef} 
-                className="absolute inset-0 w-full h-full pointer-events-none z-10"
+                className={`absolute inset-0 w-full h-full pointer-events-none z-10 ${!cameraActive ? 'hidden' : ''}`}
                 style={{ transform: 'scaleX(-1)' }}
               />
               
               {/* Camera off state */}
               {!cameraActive && (
                 <div className="flex flex-col items-center gap-4 z-20">
-                  <div className="w-24 h-24 rounded-full border-2 border-cyan-400/30 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-5xl text-cyan-400/50">videocam</span>
+                  <div className="w-24 h-24 rounded-full border-2 border-red-500/30 flex items-center justify-center bg-red-500/10">
+                    <span className="material-symbols-outlined text-5xl text-red-400">videocam_off</span>
                   </div>
-                  <p className="text-on-surface-variant text-sm">{cameraError || "Camera feed inactive"}</p>
+                  <p className="text-on-surface-variant text-sm">{cameraError || "Camera securely disabled"}</p>
                   <button 
                     onClick={startCamera}
                     className="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-violet-600 font-bold text-white text-sm tracking-wider hover:scale-105 active:scale-95 transition-transform"
@@ -302,9 +302,10 @@ export default function TrainerPage() {
                   </button>
                   <button
                     onClick={stopCamera}
-                    className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-on-surface-variant text-sm hover:bg-white/10 transition-colors"
+                    className="px-4 py-2 rounded-lg bg-red-500/20 border border-red-500/30 text-red-400 text-sm hover:bg-red-500/30 transition-colors flex items-center gap-2"
                   >
                     <span className="material-symbols-outlined text-[18px]">videocam_off</span>
+                    <span className="font-bold tracking-wider">TURN OFF</span>
                   </button>
                 </div>
               </div>
