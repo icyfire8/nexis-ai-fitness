@@ -1,17 +1,48 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import ProtectedRoute from "../components/ProtectedRoute";
 import { useAuth } from "../../context/AuthContext";
 
 export default function TelemetryData() {
   const { userProfile } = useAuth();
-  
-  let bmi = 0;
-  if (userProfile?.latestMetrics?.weight && userProfile?.latestMetrics?.height) {
-    const w = userProfile.latestMetrics.weight;
-    const h = userProfile.latestMetrics.height / 100;
-    bmi = Number((w / (h * h)).toFixed(1));
-  }
+
+  const [weight, setWeight] = useState("");
+  const [height, setHeight] = useState("");
+
+  // Seed from profile metrics or localStorage
+  useEffect(() => {
+    if (userProfile?.latestMetrics?.weight) {
+      setWeight(String(userProfile.latestMetrics.weight));
+    }
+    if (userProfile?.latestMetrics?.height) {
+      setHeight(String(userProfile.latestMetrics.height));
+    }
+    // Fallback: check localStorage pre-auth data
+    if (!userProfile?.latestMetrics?.weight || !userProfile?.latestMetrics?.height) {
+      try {
+        const preAuth = localStorage.getItem("nexis_pre_auth_data");
+        if (preAuth) {
+          const d = JSON.parse(preAuth);
+          if (d.weight && !weight) setWeight(String(d.weight));
+          if (d.height && !height) setHeight(String(d.height));
+        }
+      } catch {}
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userProfile]);
+
+  const bmi = (weight && height && Number(height) > 0)
+    ? Number((Number(weight) / Math.pow(Number(height) / 100, 2)).toFixed(1))
+    : 0;
+
+  const getBmiCategory = (val: number) => {
+    if (val < 18.5) return { label: "Underweight", color: "text-yellow-400" };
+    if (val < 25) return { label: "Normal", color: "text-green-400" };
+    if (val < 30) return { label: "Overweight", color: "text-orange-400" };
+    return { label: "Obese", color: "text-red-400" };
+  };
+
   return (
     <ProtectedRoute>
       <main className="pt-[100px] pb-[120px] px-6 max-w-7xl mx-auto flex flex-col gap-8">
@@ -129,12 +160,32 @@ export default function TelemetryData() {
             <span className="material-symbols-outlined">accessibility_new</span>
             <span className="font-label-caps text-label-caps uppercase">Body Mass Index</span>
           </div>
-          <div className="flex items-baseline gap-1">
+          <div className="flex items-baseline gap-2">
             <span className="font-headline-lg text-headline-lg text-on-surface">{bmi || "--"}</span>
             <span className="font-body-md text-body-md text-on-surface-variant">kg/m²</span>
+            {bmi > 0 && (
+              <span className={`text-xs font-bold tracking-wider uppercase ml-1 ${getBmiCategory(bmi).color}`}>{getBmiCategory(bmi).label}</span>
+            )}
+          </div>
+          {/* Inline weight/height inputs */}
+          <div className="flex gap-2 mt-1">
+            <input
+              type="number"
+              placeholder="Weight (kg)"
+              value={weight}
+              onChange={(e) => setWeight(e.target.value)}
+              className="w-1/2 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-xs placeholder:text-white/30 focus:outline-none focus:border-primary-container/50 transition-colors"
+            />
+            <input
+              type="number"
+              placeholder="Height (cm)"
+              value={height}
+              onChange={(e) => setHeight(e.target.value)}
+              className="w-1/2 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-xs placeholder:text-white/30 focus:outline-none focus:border-primary-container/50 transition-colors"
+            />
           </div>
           <div className="w-full h-1 bg-surface-container-high rounded-full overflow-hidden mt-auto">
-            <div className="h-full bg-primary-container" style={{ width: bmi ? `${Math.min((bmi / 40) * 100, 100)}%` : '0%' }}></div>
+            <div className="h-full bg-primary-container transition-all duration-500" style={{ width: bmi ? `${Math.min((bmi / 40) * 100, 100)}%` : '0%' }}></div>
           </div>
         </div>
 

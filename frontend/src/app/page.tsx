@@ -407,7 +407,7 @@ export default function Dashboard() {
               </button>
             </div>
             <div className="w-full md:w-48 h-48 rounded-2xl overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-700 shadow-2xl">
-              <img className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdhpvjFEUsrwgzrxbhJ_vTz6RhlX8ygNBeB0rQx0YnRwT4Ahh2m-YpgfsVtRJ8K8Woj7Lg404AvD-SxaMGsy2_nH00YkwrWEXglmloy1vP0pwpWfd5wZBcf4soTf_Dx-qS3K3h2a2UfBz94SYPiA1O2OZpa3tkAcPvdC7rgzGlnTTADoqhYFZJWlTklJtK8UPgahieMpXv7cRfX6UVevKYqJRSFlPJ_mMs0uixTkVsijVQaOS5LDFckycKzkFSLS0laKOkXmslvvr9" alt="Athletic weights" />
+              <img className="w-full h-full object-cover" src="https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?q=80&w=800&auto=format&fit=crop" alt="Athletic weights" />
             </div>
           </div>
         </div>
